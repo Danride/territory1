@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Банановый переполох</title>
+<style>
+:root{color-scheme:dark;--ink:#24321d;--leaf:#276749;--gold:#ffd447}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:radial-gradient(circle at 50% 0,#397c48,#173c2c 72%);color:#fff;display:grid;place-items:center;padding:20px}
+.game{width:min(900px,100%);text-align:center}
+h1{font-size:clamp(2rem,6vw,3.5rem);margin:0 0 6px;text-shadow:0 4px 0 #17452c}
+.sub{margin:0 0 18px;color:#e1f5d5}
+.hud{display:flex;justify-content:center;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+.pill{background:#123d2b;border:2px solid #8bc66a;border-radius:14px;padding:9px 18px;font-weight:800}
+.pill span{color:var(--gold);font-variant-numeric:tabular-nums}
+.arena{position:relative;overflow:hidden;border:4px solid #b5e47e;border-radius:22px;background:#a6d96b;box-shadow:0 16px 40px #09271988;touch-action:manipulation}
+canvas{display:block;width:100%;height:auto;aspect-ratio:16/9}
+.overlay{position:absolute;inset:0;display:grid;place-items:center;background:#123d2bbd;padding:20px}
+.panel{max-width:430px;background:#fff7d6;color:#26351f;border:4px solid #f3bd32;border-radius:20px;padding:22px;box-shadow:0 10px 0 #8c6418}
+.panel h2{margin:0 0 8px;font-size:1.8rem}.panel p{margin:0 0 16px;line-height:1.5}
+button{border:0;border-radius:12px;padding:12px 22px;background:#f2bd2e;color:#30260b;font-weight:900;font-size:1rem;cursor:pointer;box-shadow:0 4px 0 #a87512}
+button:active{transform:translateY(2px);box-shadow:0 2px 0 #a87512}
+.help{color:#e1f5d5;font-size:.92rem;margin:13px 0 0}
+.mobile{display:none;gap:8px;justify-content:center;margin-top:12px}
+.mobile button{width:58px;height:48px;padding:0;font-size:1.2rem}
+@media(max-width:650px){.mobile{display:flex}.help{font-size:.82rem}}
+</style>
+</head>
+<body>
+<main class="game">
+<h1>🍌 Банановый переполох!</h1>
+<p class="sub">Помоги обезьянке собрать как можно больше бананов</p>
+<div class="hud">
+ <div class="pill">🍌 Счёт: <span id="score">0</span></div>
+ <div class="pill">⏱ Время: <span id="time">45</span> сек</div>
+ <div class="pill">🏆 Рекорд: <span id="best">0</span></div>
+</div>
+<div class="arena">
+ <canvas id="field" width="900" height="506" aria-label="Игровое поле"></canvas>
+ <div class="overlay" id="overlay">
+  <div class="panel">
+   <h2 id="message">Готов к банановому забегу?</h2>
+   <p id="details">Собирай 🍌, уворачивайся от колючих кустов 🌵 и постарайся набрать максимум за 45 секунд!</p>
+   <button id="start">Начать игру</button>
+  </div>
+ </div>
+</div>
+<div class="mobile" aria-label="Управление">
+ <button data-dir="up">⬆️</button>
+ <button data-dir="left">⬅️</button>
+ <button data-dir="down">⬇️</button>
+ <button data-dir="right">➡️</button>
+</div>
+<p class="help">Управление: WASD или стрелки на клавиатуре · На телефоне — кнопки ниже</p>
+</main>
+<script>
+const canvas=document.getElementById('field'),ctx=canvas.getContext('2d');
+const scoreEl=document.getElementById('score'),timeEl=document.getElementById('time'),bestEl=document.getElementById('best');
+const overlay=document.getElementById('overlay'),message=document.getElementById('message'),details=document.getElementById('details'),startBtn=document.getElementById('start');
+let player={x:450,y:250,r:23},bananas=[],bushes=[],score=0,time=45,running=false,last=0,spawn=0,keys={},raf=0;
+let best=Number(localStorage.getItem('bananaBest')||0);bestEl.textContent=best;
+const rand=(a,b)=>Math.random()*(b-a)+a;
+function place(items,n,r){items.length=0;for(let i=0;i<n;i++){let p;do{p={x:rand(45,855),y:rand(45,461),r};}while(Math.hypot(p.x-player.x,p.y-player.y)<100);items.push(p)}}
+function start(){cancelAnimationFrame(raf);player={x:450,y:250,r:23};score=0;time=45;spawn=0;place(bananas,7,14);place(bushes,6,22);scoreEl.textContent=0;timeEl.textContent=45;overlay.hidden=true;running=true;last=performance.now();raf=requestAnimationFrame(loop)}
+function finish(){running=false;if(score>best){best=score;localStorage.setItem('bananaBest',best);bestEl.textContent=best}message.textContent='Забег окончен!';details.textContent='Ты собрал(а) '+score+' бананов. '+(score>=15?'Настоящий банановый чемпион!':'Попробуй ещё раз и побей свой рекорд!');startBtn.textContent='Играть снова';overlay.hidden=false}
+function draw(){ctx.clearRect(0,0,900,506);ctx.fillStyle='#a6d96b';ctx.fillRect(0,0,900,506);
+ for(let y=20;y<506;y+=65)for(let x=20;x<900;x+=65){ctx.fillStyle='#91c95c';ctx.beginPath();ctx.arc(x+(y%2)*12,y,3,0,Math.PI*2);ctx.fill()}
+ bushes.forEach(b=>{ctx.font='38px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🌵',b.x,b.y)});
+ bananas.forEach(b=>{ctx.font='32px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🍌',b.x,b.y)});
+ ctx.font='42px sans-serif';ctx.textAlign='center';ctx.textBaseline='middle';ctx.fillText('🐵',player.x,player.y);
+}
+function loop(now){if(!running)return;const dt=Math.min((now-last)/1000,.04);last=now;time-=dt;timeEl.textContent=Math.max(0,Math.ceil(time));
+ let dx=0,dy=0;if(keys.ArrowLeft||keys.a)dx--;if(keys.ArrowRight||keys.d)dx++;if(keys.ArrowUp||keys.w)dy--;if(keys.ArrowDown||keys.s)dy++;
+ const len=Math.hypot(dx,dy)||1;player.x=Math.max(25,Math.min(875,player.x+dx/len*245*dt));player.y=Math.max(25,Math.min(481,player.y+dy/len*245*dt));
+ for(let i=bananas.length-1;i>=0;i--){let b=bananas[i];if(Math.hypot(player.x-b.x,player.y-b.y)<player.r+b.r){bananas.splice(i,1);score++;scoreEl.textContent=score}}
+ for(const b of bushes){if(Math.hypot(player.x-b.x,player.y-b.y)<player.r+b.r-5){player.x-=dx*5;player.y-=dy*5}}
+ spawn+=dt;if(spawn>1.1&&bananas.length<8){spawn=0;bananas.push({x:rand(35,865),y:rand(35,471),r:14})}
+ draw();if(time<=0){finish();return}raf=requestAnimationFrame(loop)}
+window.addEventListener('keydown',e=>{if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();keys[e.key]=true});
+window.addEventListener('keyup',e=>keys[e.key]=false);
+document.querySelectorAll('[data-dir]').forEach(btn=>{const dir=btn.dataset.dir,map={up:'ArrowUp',down:'ArrowDown',left:'ArrowLeft',right:'ArrowRight'};btn.addEventListener('pointerdown',e=>{e.preventDefault();keys[map[dir]]=true});['pointerup','pointerleave','pointercancel'].forEach(ev=>btn.addEventListener(ev,()=>keys[map[dir]]=false))});
+startBtn.addEventListener('click',start);draw();
+</script>
+</body>
+</html>
