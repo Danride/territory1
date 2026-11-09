@@ -15,7 +15,7 @@
 <style>
 :root {
   --bg: #070b14;
-  --panel: rgba(9, 13, 23, 0.86);
+  --panel: rgba(10, 14, 24, 0.93);
   --panel-solid: #0c1220;
   --line: rgba(255,255,255,0.08);
   --line2: rgba(255,255,255,0.16);
@@ -56,7 +56,6 @@ svg { display: block; }
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: var(--radius);
-  backdrop-filter: blur(14px) saturate(1.2); -webkit-backdrop-filter: blur(14px) saturate(1.2);
   box-shadow: 0 10px 30px rgba(0,0,0,0.45), inset 0 1px 0 rgba(255,255,255,0.04);
 }
 
@@ -212,7 +211,7 @@ svg { display: block; }
   position: fixed; top: calc(var(--st) + 66px); left: 50%; transform: translateX(-50%) translateY(-12px);
   background: rgba(14,19,32,0.95); border: 1px solid var(--line2); color: #fff;
   padding: 9px 16px; border-radius: 999px; font-size: 12.5px; font-weight: 600;
-  z-index: 40; opacity: 0; transition: all 0.22s ease; pointer-events: none; white-space: nowrap;
+  z-index: 1300; opacity: 0; transition: all 0.22s ease; pointer-events: none; white-space: nowrap;
   max-width: calc(100% - 24px); overflow: hidden; text-overflow: ellipsis;
   box-shadow: 0 8px 24px rgba(0,0,0,0.5);
 }
@@ -270,7 +269,7 @@ svg { display: block; }
 #menu-screen { z-index: 1000; background: var(--bg); overflow: hidden; }
 #menu-preview {
   position: absolute; inset: -6%; width: 112%; height: 112%; object-fit: cover; image-rendering: pixelated;
-  filter: blur(2px) brightness(0.6) saturate(1); z-index: 0; animation: drift 40s ease-in-out infinite alternate;
+  filter: brightness(0.55); z-index: 0;
 }
 @keyframes drift { from { transform: scale(1.05) translate(-1%, -1%); } to { transform: scale(1.15) translate(1.5%, 1%); } }
 .menu-vignette { position: absolute; inset: 0; z-index: 0; background: radial-gradient(ellipse at center, rgba(7,11,20,0.45) 0%, rgba(7,11,20,0.8) 75%, #070b14 100%); }
@@ -358,6 +357,29 @@ svg { display: block; }
 .ov-actions { display: flex; flex-direction: column; gap: 8px; width: 100%; }
 .ov-actions .menu-btn.primary { margin-top: 0; }
 #confirm-modal { z-index: 1200; }
+
+/* Карты */
+.map-pick { display: flex; align-items: center; gap: 12px; width: 100%; padding: 8px 12px 8px 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--line2); border-radius: 12px; color: #fff; cursor: pointer; text-align: left; }
+.map-pick:active { background: rgba(255,255,255,0.1); }
+.map-pick canvas { width: 46px; height: 46px; border-radius: 8px; image-rendering: pixelated; flex-shrink: 0; }
+.mp-info { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mp-info b { font-size: 14.5px; font-weight: 800; }
+.mp-info small { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mp-chev { width: 18px; height: 18px; color: var(--muted); flex-shrink: 0; }
+.map-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
+.map-card { display: flex; flex-direction: column; padding: 0; overflow: hidden; background: rgba(255,255,255,0.03); border: 1px solid var(--line); border-radius: 12px; color: #fff; cursor: pointer; text-align: left; font-family: inherit; }
+.map-card:active { transform: scale(0.98); }
+.map-card canvas { width: 100%; aspect-ratio: 1; display: block; image-rendering: pixelated; }
+.map-card.sel { border-color: var(--pc); box-shadow: 0 0 0 1px var(--pc); }
+.map-card.locked canvas { filter: grayscale(0.7) brightness(0.5); }
+.mc-body { padding: 8px 10px 10px; }
+.mc-name { font-size: 13.5px; font-weight: 800; }
+.mc-desc { font-size: 11px; color: var(--muted); margin-top: 3px; line-height: 1.3; min-height: 28px; }
+.mc-foot { margin-top: 8px; font-size: 12px; font-weight: 800; display: flex; align-items: center; gap: 4px; color: var(--muted); }
+.map-card.sel .mc-foot { color: var(--pc); }
+.map-card.locked .mc-foot { color: var(--gold); }
+.mc-foot svg { width: 13px; height: 13px; }
+@media (min-width: 700px) { .map-grid { grid-template-columns: repeat(3, 1fr); } #map-screen .submenu-content { max-width: 640px; } }
 
 /* ============ RESPONSIVE ============ */
 /* Tablets / narrow desktop */
@@ -467,6 +489,12 @@ svg { display: block; }
       <button data-diff="normal">Норма</button>
       <button data-diff="hard">Сложная</button>
     </div>
+    <div class="menu-label">Карта</div>
+    <button class="map-pick" id="menu-map">
+      <canvas id="map-thumb" width="96" height="96"></canvas>
+      <span class="mp-info"><b id="map-name">Континенты</b><small id="map-desc"></small></span>
+      <svg class="mp-chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </button>
     <button class="menu-btn primary" id="menu-start">
       <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
       В бой
@@ -525,6 +553,12 @@ svg { display: block; }
       <li><span class="help-n">⌨</span><span>ПК: <b>1–5</b> доля армии, <b>Q W E R T Y</b> здания, <b>Пробел</b> пауза, <b>Esc</b> отмена.</span></li>
     </ul>
   </div>
+</div>
+
+<div class="screen submenu" id="map-screen">
+  <button class="submenu-close card" data-close="map-screen"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+  <div class="submenu-title">Карты</div>
+  <div class="submenu-content card"><div class="map-grid" id="map-grid"></div></div>
 </div>
 
 <!-- ================= GAME ================= -->
@@ -711,7 +745,7 @@ function cancelAdSchedule() { adTriggerTime = Infinity; adShownThisGame = true; 
 // ============================================================
 let menuState = {
   nickname: 'Игрок', colorIndex: 0, texture: 'solid', stars: 0, difficulty: 'normal',
-  games: 0, wins: 0, bestShare: 0,
+  games: 0, wins: 0, bestShare: 0, map: 'continents', ownedMaps: [],
   purchases: { fastStart: false, goldBuildings: false, xlMissile: false, doubleIncome: false }
 };
 const COLOR_PRESETS = [
@@ -745,6 +779,8 @@ function loadMenuState() {
     if (typeof o.wins === 'number') menuState.wins = o.wins;
     if (typeof o.bestShare === 'number') menuState.bestShare = o.bestShare;
     if (o.purchases) Object.assign(menuState.purchases, o.purchases);
+    if (typeof o.map === 'string') menuState.map = o.map;
+    if (Array.isArray(o.ownedMaps)) menuState.ownedMaps = o.ownedMaps.filter(x => typeof x === 'string');
   } catch(e) {}
 }
 
@@ -756,8 +792,9 @@ const WORLD_W = W * CELL, WORLD_H = H * CELL;
 const PLAYER_COUNT = 41;
 const NEIGHBORS = [[1,0],[-1,0],[0,1],[0,-1]];
 const NEIGHBORS8 = [[1,0],[-1,0],[0,1],[0,-1],[1,1],[-1,1],[1,-1],[-1,-1]];
-const WATER_DEEP = [9, 30, 58], WATER_SHALLOW = [36, 108, 148];
-const DEEP_CSS = 'rgb(9,30,58)';
+const WATER_DEEP = [22, 52, 88], WATER_SHALLOW = [38, 84, 124];
+const DEEP_CSS = 'rgb(22,52,88)';
+const NEUTRAL_COLOR = [96, 110, 88];
 const ALLY_BORDER_COLOR = [94, 230, 160];
 
 const DEFENDER_RESERVE_RATIO = 0.15;   // всегда остаётся дома
@@ -909,30 +946,12 @@ lowCanvas.width = W; lowCanvas.height = H;
 const lowCtx = lowCanvas.getContext('2d');
 const imgData = lowCtx.createImageData(W, H);
 const data = imgData.data;
-const waterCanvas = document.createElement('canvas');
-waterCanvas.width = W; waterCanvas.height = H;
-const waterCtx = waterCanvas.getContext('2d');
-
-const wavePatternCanvas = (() => {
-  const c = document.createElement('canvas');
-  c.width = 80; c.height = 80;
-  const cx = c.getContext('2d');
-  cx.strokeStyle = 'rgba(255,255,255,0.10)'; cx.lineWidth = 1.6; cx.lineCap = 'round';
-  const waves = [{x:12,y:15},{x:52,y:28},{x:25,y:48},{x:65,y:62},{x:8,y:72},{x:42,y:12},{x:35,y:38},{x:70,y:45}];
-  for (const w of waves) {
-    cx.beginPath(); cx.moveTo(w.x-5, w.y);
-    cx.quadraticCurveTo(w.x-2.5, w.y-2.2, w.x, w.y);
-    cx.quadraticCurveTo(w.x+2.5, w.y+2.2, w.x+5, w.y); cx.stroke();
-  }
-  return c;
-})();
-let wavePattern = null;
 
 // ============================================================
 //  СОСТОЯНИЕ ИГРЫ
 // ============================================================
 let terrain, isRiver, landmass, landmassCount, totalLandCells, owner, pop, cells, colors, botNames, playerCells;
-let landShade, neutralRGB;
+let waterTone;
 let fortAura, fortAuraOwner, fortAuraDirty = true;
 let attacks = [], ships = [], boats = [], missiles = [], effects = [], buildings = new Map();
 let money, lastIncome = 0, lastMaxPop = 0, lastGrowthRate = 0;
@@ -1021,9 +1040,88 @@ function fbm(x, y, s) {
 // ============================================================
 //  КАРТА
 // ============================================================
-function addRivers() {
+// ============================================================
+//  КАРТЫ
+// ============================================================
+const MAPS = [
+  { id: 'continents',  name: 'Континенты',  desc: 'Классика: материк с заливами, полуостровами и реками', cost: 0,   thumbSeed: 11 },
+  { id: 'pangaea',     name: 'Пангея',      desc: 'Огромный сплошной материк — чистая сухопутная война', cost: 0, thumbSeed: 23 },
+  { id: 'archipelago', name: 'Архипелаг',   desc: 'Десятки островов — всё решает флот', cost: 300, thumbSeed: 37 },
+  { id: 'twin',        name: 'Два мира',    desc: 'Два материка, разделённые проливом', cost: 400, thumbSeed: 41 },
+  { id: 'ring',        name: 'Кольцо',      desc: 'Материк-кольцо вокруг внутреннего моря', cost: 500, thumbSeed: 53 },
+  { id: 'rivers',      name: 'Речной край', desc: 'Сушу режут десятки рек и протоков', cost: 600, thumbSeed: 67 }
+];
+function mapOwned(def) { return def.cost === 0 || menuState.ownedMaps.includes(def.id); }
+function currentMapDef() { return MAPS.find(m => m.id === menuState.map && mapOwned(m)) || MAPS[0]; }
+function blobsLand(list, n, x, y) {
+  for (const c of list) { const dx = x - c.x, dy = y - c.y; if (Math.sqrt(dx*dx + dy*dy) + n < c.r) return true; }
+  return false;
+}
+// Каждый генератор: landAt(x, y) в клетках + число рек. rnd — источник случайности (для превью — сидированный)
+const MAP_GEN = {
+  continents(rnd) {
+    const seed = Math.floor(rnd() * 100000);
+    const numC = 5 + Math.floor(rnd() * 4);
+    const centers = [];
+    for (let i = 0; i < numC; i++) {
+      const angle = (i / numC) * Math.PI * 2 + (rnd() - 0.5) * 0.6;
+      const dist = 35 + rnd() * 60;
+      centers.push({ x: W/2 + Math.cos(angle)*dist, y: H/2 + Math.sin(angle)*dist, r: 95 + rnd()*55 });
+    }
+    return { rivers: 3 + Math.floor(rnd() * 3), mainShare: 0.93,
+      landAt: (x, y) => blobsLand(centers, (fbm(x*0.06, y*0.06, seed) - 0.5) * 34, x, y) };
+  },
+  pangaea(rnd) {
+    const seed = Math.floor(rnd() * 100000);
+    const lobes = [];
+    for (let i = 0; i < 4; i++) {
+      const a = rnd() * Math.PI * 2, d = 20 + rnd() * 45;
+      lobes.push({ x: W/2 + Math.cos(a)*d, y: H/2 + Math.sin(a)*d, r: 150 + rnd()*25 });
+    }
+    return { rivers: 3 + Math.floor(rnd() * 3), mainShare: 0.95,
+      landAt: (x, y) => blobsLand(lobes, (fbm(x*0.03, y*0.03, seed) - 0.5) * 60 + (fbm(x*0.08, y*0.08, seed + 5) - 0.5) * 20, x, y) };
+  },
+  archipelago(rnd) {
+    const seed = Math.floor(rnd() * 100000);
+    const isl = [];
+    const n = 26 + Math.floor(rnd() * 10);
+    for (let i = 0; i < n; i++) isl.push({ x: 30 + rnd() * (W - 60), y: 30 + rnd() * (H - 60), r: 15 + rnd() * 26 });
+    return { rivers: 0, mainShare: null,
+      landAt: (x, y) => blobsLand(isl, (fbm(x*0.08, y*0.08, seed) - 0.5) * 18, x, y) };
+  },
+  twin(rnd) {
+    const seed = Math.floor(rnd() * 100000);
+    const L = [], R = [];
+    for (let i = 0; i < 3; i++) {
+      L.push({ x: W*0.25 + (rnd() - 0.5) * 40, y: H*0.5 + (rnd() - 0.5) * 160, r: 72 + rnd() * 30 });
+      R.push({ x: W*0.75 + (rnd() - 0.5) * 40, y: H*0.5 + (rnd() - 0.5) * 160, r: 72 + rnd() * 30 });
+    }
+    return { rivers: 2, mainShare: null,
+      landAt: (x, y) => {
+        if (Math.abs(x - W/2) < 9 + (fbm(y*0.05, 3, seed) - 0.5) * 8) return false;
+        return blobsLand(x < W/2 ? L : R, (fbm(x*0.05, y*0.05, seed) - 0.5) * 40, x, y);
+      } };
+  },
+  ring(rnd) {
+    const seed = Math.floor(rnd() * 100000);
+    const inner = 62 + rnd() * 14, outer = 176 + rnd() * 12;
+    return { rivers: 2, mainShare: null,
+      landAt: (x, y) => {
+        const d = Math.hypot(x - W/2, y - H/2);
+        const n = (fbm(x*0.05, y*0.05, seed) - 0.5) * 44;
+        if (d + n < 24) return true;
+        return d + n < outer && d - n * 0.8 > inner;
+      } };
+  },
+  rivers(rnd) {
+    const g = MAP_GEN.continents(rnd);
+    g.rivers = 14 + Math.floor(rnd() * 5); g.longRivers = true; g.mainShare = null;
+    return g;
+  }
+};
+
+function addRivers(numRivers, long) {
   isRiver = new Uint8Array(W*H);
-  const numRivers = 3 + Math.floor(Math.random() * 3);
   for (let r = 0; r < numRivers; r++) {
     let sx = -1, sy = -1;
     for (let attempt = 0; attempt < 100; attempt++) {
@@ -1033,7 +1131,7 @@ function addRivers() {
     }
     if (sx < 0) continue;
     let x = sx, y = sy, dir = Math.random() * Math.PI * 2;
-    const steps = 80 + Math.floor(Math.random() * 100);
+    const steps = (long ? 120 : 80) + Math.floor(Math.random() * (long ? 160 : 100));
     for (let s = 0; s < steps; s++) {
       dir += (Math.random() - 0.5) * 0.5;
       const nx = Math.round(x + Math.cos(dir));
@@ -1076,98 +1174,42 @@ function labelLandmasses() {
     landmassCount++;
   }
 }
-function buildMap() {
-  const seed = Math.floor(Math.random() * 100000);
-  const numC = 5 + Math.floor(Math.random() * 4);
-  const centers = [];
-  for (let i = 0; i < numC; i++) {
-    const angle = (i / numC) * Math.PI * 2 + (Math.random() - 0.5) * 0.6;
-    const dist = 35 + Math.random() * 60;
-    centers.push({ x: W/2 + Math.cos(angle)*dist, y: H/2 + Math.sin(angle)*dist, r: 95 + Math.random()*55 });
-  }
+function buildMap(gen) {
   terrain = new Uint8Array(W*H);
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const edgeDist = Math.min(x, W-1-x, y, H-1-y);
-    if (edgeDist < 8) continue;
-    const noiseOffset = (fbm(x*0.06, y*0.06, seed) - 0.5) * 34;
-    let inside = false;
-    for (const c of centers) {
-      const dx = x-c.x, dy = y-c.y;
-      if (Math.sqrt(dx*dx + dy*dy) + noiseOffset < c.r) { inside = true; break; }
-    }
-    if (inside) terrain[y*W+x] = 1;
+  for (let y = 8; y < H - 8; y++) for (let x = 8; x < W - 8; x++) {
+    if (gen.landAt(x, y)) terrain[y*W+x] = 1;
   }
-  addRivers();
+  addRivers(gen.rivers, gen.longRivers);
 }
 function generateMap() {
-  for (let attempt = 0; attempt < 20; attempt++) {
-    buildMap(); labelLandmasses();
+  const def = currentMapDef();
+  for (let attempt = 0; attempt < 12; attempt++) {
+    const gen = MAP_GEN[def.id](Math.random);
+    buildMap(gen); labelLandmasses();
+    if (totalLandCells < 25000) continue;
+    if (!gen.mainShare) return;
     const lmSizes = new Uint32Array(landmassCount);
     for (let i = 0; i < W*H; i++) if (terrain[i]) lmSizes[landmass[i]]++;
     let maxLmSize = 0;
-    for (const s of lmSizes) if (s > maxLmSize) maxLmSize = s;
-    if (totalLandCells > 0 && maxLmSize / totalLandCells > 0.93) return;
+    for (const sz of lmSizes) if (sz > maxLmSize) maxLmSize = sz;
+    if (maxLmSize / totalLandCells > gen.mainShare) return;
   }
 }
-
-// Рельеф, биомы и глубина воды — чисто визуальный слой
+// Простая плоская палитра: мелководье у берега и глубокая вода
 function computeTerrainVisuals() {
-  const seed = Math.floor(Math.random() * 100000);
-  landShade = new Float32Array(W*H);
-  neutralRGB = new Uint8ClampedArray(W*H*3);
-  const DRY = [128, 132, 76], GRASS = [72, 122, 62], FOREST = [40, 88, 52], SAND = [184, 168, 116];
-  for (let y = 0; y < H; y++) for (let x = 0; x < W; x++) {
-    const i = y*W + x;
-    if (!terrain[i]) continue;
-    const n = fbm(x*0.05, y*0.05, seed);
-    const fine = vnoise(x*0.35, y*0.35, seed + 11);
-    const shade = 0.88 + n*0.22 + (fine - 0.5)*0.07;
-    landShade[i] = shade;
-    const b = fbm(x*0.028 + 40, y*0.028, seed + 99);
-    let col;
-    if (b < 0.45) { const t = Math.max(0, Math.min(1, (b - 0.3) / 0.15)); col = [lerp(DRY[0],GRASS[0],t), lerp(DRY[1],GRASS[1],t), lerp(DRY[2],GRASS[2],t)]; }
-    else { const t = Math.max(0, Math.min(1, (b - 0.5) / 0.15)); col = [lerp(GRASS[0],FOREST[0],t), lerp(GRASS[1],FOREST[1],t), lerp(GRASS[2],FOREST[2],t)]; }
-    let coast = false;
-    for (let k = 0; k < 4; k++) {
-      const nx = x + NEIGHBORS[k][0], ny = y + NEIGHBORS[k][1];
-      if (nx<0||nx>=W||ny<0||ny>=H || !terrain[ny*W+nx]) { coast = true; break; }
-    }
-    // приглушённая палитра — чтобы цвета держав читались поверх земли
-    const gray = (col[0] + col[1] + col[2]) / 3;
-    col = [lerp(col[0], gray, 0.3) * 0.9, lerp(col[1], gray, 0.3) * 0.9, lerp(col[2], gray, 0.3) * 0.9];
-    if (coast) col = [lerp(col[0],SAND[0],0.55), lerp(col[1],SAND[1],0.55), lerp(col[2],SAND[2],0.55)];
-    neutralRGB[i*3]   = col[0]*shade;
-    neutralRGB[i*3+1] = col[1]*shade;
-    neutralRGB[i*3+2] = col[2]*shade;
-  }
-  // расстояние воды до берега
-  const dist = new Uint8Array(W*H).fill(255);
-  const q = new Int32Array(W*H); let head = 0, tail = 0;
-  for (let i = 0; i < W*H; i++) if (terrain[i]) { dist[i] = 0; q[tail++] = i; }
-  while (head < tail) {
-    const cur = q[head++]; const d = dist[cur];
-    if (d >= 24) continue;
-    const x = cur % W, y = (cur / W) | 0;
-    for (let k = 0; k < 4; k++) {
-      const nx = x + NEIGHBORS[k][0], ny = y + NEIGHBORS[k][1];
-      if (nx<0||nx>=W||ny<0||ny>=H) continue;
-      const ni = ny*W + nx;
-      if (dist[ni] <= d + 1) continue;
-      dist[ni] = d + 1; q[tail++] = ni;
-    }
-  }
-  const wImg = waterCtx.createImageData(W, H);
-  const wd = wImg.data;
+  waterTone = new Uint8Array(W*H);
   for (let i = 0; i < W*H; i++) {
-    let t = isRiver[i] ? 0.05 : Math.min(1, Math.pow(Math.min(dist[i], 24) / 16, 0.75));
-    const n = (hash2(i % W, (i / W) | 0, seed) - 0.5) * 0.04;
-    t = Math.max(0, Math.min(1, t + n));
-    wd[i*4]   = lerp(WATER_SHALLOW[0], WATER_DEEP[0], t);
-    wd[i*4+1] = lerp(WATER_SHALLOW[1], WATER_DEEP[1], t);
-    wd[i*4+2] = lerp(WATER_SHALLOW[2], WATER_DEEP[2], t);
-    wd[i*4+3] = 255;
+    if (isRiver[i]) { waterTone[i] = 1; continue; }
+    if (!terrain[i]) continue;
+    const x = i % W, y = (i / W) | 0;
+    for (let dy = -2; dy <= 2; dy++) for (let dx = -2; dx <= 2; dx++) {
+      if (Math.abs(dx) + Math.abs(dy) > 3) continue;
+      const nx = x + dx, ny = y + dy;
+      if (nx < 0 || nx >= W || ny < 0 || ny >= H) continue;
+      const ni = ny*W + nx;
+      if (!terrain[ni]) waterTone[ni] = 1;
+    }
   }
-  waterCtx.putImageData(wImg, 0, 0);
 }
 
 // ============================================================
@@ -1203,20 +1245,22 @@ function initPlayers() {
   pop[0] = 200; money[0] = 3000;
   for (let i = 1; i < PLAYER_COUNT; i++) { pop[i] = 200; money[i] = 2500; }
   for (let i = 0; i < W*H; i++) {
-    if (terrain[i]) {
-      data[i*4] = neutralRGB[i*3]; data[i*4+1] = neutralRGB[i*3+1]; data[i*4+2] = neutralRGB[i*3+2]; data[i*4+3] = 255;
-    } else { data[i*4]=0; data[i*4+1]=0; data[i*4+2]=0; data[i*4+3]=0; }
+    const c = terrain[i] ? NEUTRAL_COLOR : (waterTone[i] ? WATER_SHALLOW : WATER_DEEP);
+    data[i*4] = c[0]; data[i*4+1] = c[1]; data[i*4+2] = c[2]; data[i*4+3] = 255;
   }
 }
 function placePlayers() {
   const starts = [];
   const minDist = 13;
+  const lmSizes = new Uint32Array(landmassCount);
+  for (let i = 0; i < W*H; i++) if (terrain[i]) lmSizes[landmass[i]]++;
   let attempts = 0;
   while (starts.length < PLAYER_COUNT && attempts < 100000) {
     attempts++;
     const x = 4 + Math.floor(Math.random() * (W - 8));
     const y = 4 + Math.floor(Math.random() * (H - 8));
     if (!terrain[y*W+x]) continue;
+    if (lmSizes[landmass[y*W+x]] < 80 && attempts < 60000) continue;   // не на крошечных островках
     let ok = true;
     for (const s of starts) if (Math.abs(s.x-x) + Math.abs(s.y-y) < minDist) { ok = false; break; }
     if (ok) starts.push({x, y});
@@ -1228,8 +1272,6 @@ function placePlayers() {
   }
   // игрок стартует на крупнейшем материке — меньше шансов застрять на островке
   let bestIdx = 0, bestSize = -1;
-  const lmSizes = new Uint32Array(landmassCount);
-  for (let i = 0; i < W*H; i++) if (terrain[i]) lmSizes[landmass[i]]++;
   for (let k = 0; k < starts.length; k++) {
     const s = lmSizes[landmass[starts[k].y*W + starts[k].x]];
     if (s > bestSize) { bestSize = s; bestIdx = k; }
@@ -1290,7 +1332,7 @@ function updateCellColor(idx) {
   const p = owner[idx];
   const x = idx % W, y = (idx / W) | 0;
   if (p < 0) {
-    data[idx*4] = neutralRGB[idx*3]; data[idx*4+1] = neutralRGB[idx*3+1]; data[idx*4+2] = neutralRGB[idx*3+2]; data[idx*4+3] = 255;
+    data[idx*4] = NEUTRAL_COLOR[0]; data[idx*4+1] = NEUTRAL_COLOR[1]; data[idx*4+2] = NEUTRAL_COLOR[2]; data[idx*4+3] = 255;
     markDirty(idx);
     return;
   }
@@ -1309,8 +1351,7 @@ function updateCellColor(idx) {
     data[idx*4] = ALLY_BORDER_COLOR[0]; data[idx*4+1] = ALLY_BORDER_COLOR[1]; data[idx*4+2] = ALLY_BORDER_COLOR[2]; data[idx*4+3] = 255;
   } else {
     const c = colors[p];
-    const shade = 0.92 + (landShade[idx] - 1) * 0.7;
-    const m = (isBorder ? BORDER_MULT : 1.0) * getTextureMult(x, y, p) * shade;
+    const m = (isBorder ? BORDER_MULT : 1.0) * getTextureMult(x, y, p);
     data[idx*4] = c[0]*m; data[idx*4+1] = c[1]*m; data[idx*4+2] = c[2]*m; data[idx*4+3] = 255;
   }
   markDirty(idx);
@@ -1440,21 +1481,39 @@ function rebuildFortAura() {
 // ============================================================
 //  АТАКИ
 // ============================================================
-function insertFrontier(frontier, cell) {
-  let lo = 0, hi = frontier.length;
-  while (lo < hi) {
-    const mid = (lo + hi) >>> 1;
-    if (frontier[mid].priority < cell.priority) lo = mid + 1; else hi = mid;
+// Двоичная куча вместо splice/shift — O(log n) на клетку фронта
+class Frontier {
+  constructor() { this.a = []; }
+  get length() { return this.a.length; }
+  push(c) {
+    const a = this.a; let i = a.length; a.push(c);
+    while (i > 0) { const p = (i - 1) >> 1; if (a[p].priority <= c.priority) break; a[i] = a[p]; i = p; }
+    a[i] = c;
   }
-  frontier.splice(lo, 0, cell);
+  pop() {
+    const a = this.a; if (!a.length) return undefined;
+    const top = a[0], last = a.pop(), n = a.length;
+    if (n) {
+      let i = 0;
+      while (true) {
+        const l = 2*i + 1; if (l >= n) break;
+        const r = l + 1, c = (r < n && a[r].priority < a[l].priority) ? r : l;
+        if (a[c].priority >= last.priority) break;
+        a[i] = a[c]; i = c;
+      }
+      a[i] = last;
+    }
+    return top;
+  }
 }
+function insertFrontier(frontier, cell) { frontier.push(cell); }
 function priorityAt(nx, ny, startDist, tx, ty) {
   const dtx = nx - tx, dty = ny - ty;
   return startDist + WAVE_WEIGHT * Math.sqrt(dtx*dtx + dty*dty);
 }
 function spawnAttackFrom(player, seeds, targetX, targetY, pool, targetOwner) {
   const visited = new Set();
-  const frontier = [];
+  const frontier = new Frontier();
   for (const seed of seeds) {
     for (let i = 0; i < 4; i++) {
       const nx = seed.x + NEIGHBORS[i][0], ny = seed.y + NEIGHBORS[i][1];
@@ -1469,10 +1528,17 @@ function spawnAttackFrom(player, seeds, targetX, targetY, pool, targetOwner) {
     }
   }
   if (frontier.length === 0) return false;
-  frontier.sort((a, b) => a.priority - b.priority);
   const now = gameNow();
+  // опорная точка и направление для индикатора атаки
+  let ox = seeds[0].x, oy = seeds[0].y, bd = Infinity;
+  for (const sd of seeds) { const d = (sd.x - targetX)**2 + (sd.y - targetY)**2; if (d < bd) { bd = d; ox = sd.x; oy = sd.y; } }
+  const cen = centroids[player];
+  let dirX = targetX - (cen ? cen.x : ox), dirY = targetY - (cen ? cen.y : oy);
+  if (Math.hypot(dirX, dirY) < 2) { dirX = targetX - ox; dirY = targetY - oy; }
+  const dl = Math.hypot(dirX, dirY) || 1;
   attacks.push({
     player, targetX, targetY, targetOwner,
+    ox, oy, dirX: dirX / dl, dirY: dirY / dl, bx: null, by: null,
     pool, initialPool: pool,
     frontier, visited, slowUntil: 0, accumulator: 0,
     startedAt: now, lastCaptureAt: now
@@ -1758,7 +1824,7 @@ function updateAttacks(dt) {
       const advantage = atk.pool / Math.max(1, density * 30);
       const adv = Math.max(ADV_MIN, Math.min(ENEMY_ADV_MAX, Math.sqrt(advantage) * 1.3 - 0.4));
       rate = (ATTACK_RATE_ENEMY + Math.sqrt(atk.initialPool) * ENEMY_POOL_RATE) * adv;
-      const f0 = atk.frontier[0];
+      const f0 = atk.frontier.a[0];
       if (f0 && fortAuraOwner[f0.y*W + f0.x] === def) rate *= FORT_AURA_SLOWDOWN;
     }
     if (atk.slowUntil > now) rate *= 0.4;
@@ -1774,7 +1840,7 @@ function updateAttacks(dt) {
     let captured = 0, stalls = 0;
     const maxStalls = Math.min(STALL_LIMIT, atk.frontier.length + 30);
     while (captured < toCapture && atk.pool > 0 && atk.frontier.length > 0) {
-      const cell = atk.frontier.shift();
+      const cell = atk.frontier.pop();
       const ni = cell.y * W + cell.x;
       if (!terrain[ni] || owner[ni] === atk.player || owner[ni] !== def) {
         atk.visited.delete(ni); if (++stalls > maxStalls) break; continue;
@@ -2463,7 +2529,7 @@ function clampCamera() {
   else cam.y = Math.max(-padY, Math.min(WORLD_H - vpH + padY, cam.y));
 }
 function resizeCanvas() {
-  dpr = Math.min(window.devicePixelRatio || 1, isMobileDevice ? 2 : 2);
+  dpr = Math.min(window.devicePixelRatio || 1, isMobileDevice ? 1.5 : 2);
   const w = window.innerWidth, h = window.innerHeight;
   canvas.width = Math.floor(w * dpr);
   canvas.height = Math.floor(h * dpr);
@@ -2508,10 +2574,6 @@ function toggleFullscreen() {
 function drawPreview() {
   const pc = document.getElementById('menu-preview');
   const pctx = pc.getContext('2d');
-  pctx.imageSmoothingEnabled = true;
-  pctx.fillStyle = DEEP_CSS;
-  pctx.fillRect(0, 0, pc.width, pc.height);
-  pctx.drawImage(waterCanvas, 0, 0, pc.width, pc.height);
   pctx.imageSmoothingEnabled = false;
   pctx.drawImage(lowCanvas, 0, 0, pc.width, pc.height);
 }
@@ -2528,7 +2590,9 @@ function setPlayerAccent() {
   const c = COLOR_PRESETS[menuState.colorIndex];
   document.documentElement.style.setProperty('--pc', rgbStr(c));
 }
+let lastRenderNow = 0;
 function render(now) {
+  const rdt = Math.min(0.1, Math.max(0, (now - lastRenderNow) / 1000)); lastRenderNow = now;
   if (dirty) {
     lowCtx.putImageData(imgData, 0, 0, dirtyMinX, dirtyMinY, dirtyMaxX-dirtyMinX+1, dirtyMaxY-dirtyMinY+1);
     dirtyMinX = W; dirtyMaxX = -1; dirtyMinY = H; dirtyMaxY = -1; dirty = false;
@@ -2540,20 +2604,6 @@ function render(now) {
   let ox = 0, oy = 0;
   if (shake > 0.2) { ox = (Math.random() - 0.5) * shake; oy = (Math.random() - 0.5) * shake; shake *= 0.88; } else shake = 0;
   ctx.setTransform(dpr * z, 0, 0, dpr * z, dpr * (-cam.x * z + ox), dpr * (-cam.y * z + oy));
-  ctx.imageSmoothingEnabled = true;
-  ctx.drawImage(waterCanvas, 0, 0, WORLD_W, WORLD_H);
-  if (z > 0.35) {
-    if (!wavePattern) wavePattern = ctx.createPattern(wavePatternCanvas, 'repeat');
-    if (wavePattern) {
-      ctx.save();
-      const drift = (now * 0.004) % 80;
-      ctx.translate(drift, drift * 0.3);
-      ctx.fillStyle = wavePattern;
-      ctx.globalAlpha = Math.min(1, (z - 0.35) * 2);
-      ctx.fillRect(cam.x - 80, cam.y - 80, vw / z + 160, vh / z + 160);
-      ctx.restore();
-    }
-  }
   ctx.imageSmoothingEnabled = false;
   const sX = Math.max(0, Math.floor(cam.x / CELL));
   const sY = Math.max(0, Math.floor(cam.y / CELL));
@@ -2568,14 +2618,14 @@ function render(now) {
   drawEffects(now);
   drawLabels(now);
   drawHover(now);
-  drawAttackIndicators(now);
+  drawAttackIndicators(now, rdt);
 }
 function inView(px, py, margin) {
   const vw = viewW() / cam.zoom, vh = viewH() / cam.zoom;
   return px > cam.x - margin && px < cam.x + vw + margin && py > cam.y - margin && py < cam.y + vh + margin;
 }
 function drawFortsAura(now) {
-  if (cam.zoom < 0.3) return;
+  if (cam.zoom < 0.45) return;
   const pulse = Math.sin(now * 0.003);
   for (const [idx, b] of buildings) {
     if (b.type !== 'fort') continue;
@@ -2589,8 +2639,7 @@ function drawFortsAura(now) {
     ctx.fill();
     ctx.strokeStyle = b.owner === 0 ? `rgba(255,255,255,${0.35 + pulse * 0.1})` : `rgba(255,90,78,${0.3 + pulse * 0.1})`;
     ctx.lineWidth = 1.5 / cam.zoom;
-    ctx.setLineDash([6/cam.zoom, 6/cam.zoom]);
-    ctx.stroke(); ctx.setLineDash([]);
+    ctx.stroke();
   }
 }
 function drawBuildings(now) {
@@ -2609,8 +2658,6 @@ function drawBuildings(now) {
       continue;
     }
     const radius = baseRadiusWorld;
-    ctx.fillStyle = 'rgba(0,0,0,0.35)';
-    ctx.beginPath(); ctx.arc(cx + radius*0.12, cy + radius*0.18, radius, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle = rgbStr(ownerCol);
     ctx.beginPath(); ctx.arc(cx, cy, radius, 0, Math.PI*2); ctx.fill();
     ctx.strokeStyle = '#ffffff'; ctx.lineWidth = Math.max(1.5, radius*0.12); ctx.stroke();
@@ -2717,7 +2764,7 @@ function drawMissiles(now) {
     ctx.beginPath(); ctx.arc(tpx, tpy, m.radius*CELL, 0, Math.PI*2);
     ctx.fillStyle = `rgba(255,90,78,${0.06 + pulse*0.05})`; ctx.fill();
     ctx.strokeStyle = `rgba(255,90,78,${pulse})`;
-    ctx.lineWidth = 2/cam.zoom; ctx.setLineDash([8/cam.zoom, 6/cam.zoom]); ctx.stroke(); ctx.setLineDash([]);
+    ctx.lineWidth = 2/cam.zoom; ctx.stroke();
     // след
     ctx.beginPath();
     const p0 = Math.max(0, m.progress - 0.25);
@@ -2781,11 +2828,7 @@ function drawEffects(now) {
     const ease = 1 - Math.pow(1 - t, 3);
     if (e.type === 'blast') {
       const R = Math.max(e.r, 2) * CELL;
-      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, R * (0.4 + 0.6*ease));
-      g.addColorStop(0, `rgba(255,250,220,${0.9*(1-t)})`);
-      g.addColorStop(0.4, `rgba(255,150,60,${0.7*(1-t)})`);
-      g.addColorStop(1, 'rgba(120,30,10,0)');
-      ctx.fillStyle = g;
+      ctx.fillStyle = `rgba(255,140,60,${0.55*(1-t)})`;
       ctx.beginPath(); ctx.arc(cx, cy, R * (0.4 + 0.6*ease), 0, Math.PI*2); ctx.fill();
       ctx.strokeStyle = `rgba(255,220,180,${0.8*(1-t)})`;
       ctx.lineWidth = 3/cam.zoom;
@@ -2894,27 +2937,37 @@ function drawAttackBadge(cx, cy, text, bgColor, textColor) {
   ctx.strokeStyle = 'rgba(0,0,0,0.5)'; ctx.lineWidth = 1.2 / cam.zoom; ctx.stroke();
   ctx.fillStyle = textColor; ctx.fillText(text, cx, cy + fontSize*0.04);
 }
-function drawAttackIndicators(now) {
-  if (cam.zoom < 0.3) return;
-  const groups = new Map();
+// Точка индикатора: луч из опорной клетки атаки в сторону цели — до первой чужой клетки.
+// Луч фиксирован, поэтому значок не прыгает по фронту, а едет вместе с границей.
+function attackFrontPoint(a) {
+  let lastX = a.ox, lastY = a.oy;
+  for (let s = 1; s < 900; s++) {
+    const x = Math.round(a.ox + a.dirX * s * 0.5), y = Math.round(a.oy + a.dirY * s * 0.5);
+    if (x < 0 || x >= W || y < 0 || y >= H) break;
+    const i = y * W + x;
+    if (!terrain[i]) break;
+    if (owner[i] !== a.player) break;
+    lastX = x; lastY = y;
+  }
+  return { x: lastX, y: lastY };
+}
+function drawAttackIndicators(now, rdt) {
+  const show = cam.zoom >= 0.3;
   for (const a of attacks) {
     if (a.pool <= 0 || a.frontier.length === 0) continue;
-    if (a.player !== 0 && a.targetOwner !== 0 && cam.zoom < 0.7) continue;
-    const key = a.player * 64 + (a.targetOwner + 1);
-    let g = groups.get(key);
-    if (!g) { g = { player: a.player, targetOwner: a.targetOwner, pool: 0, sumX: 0, sumY: 0, count: 0 }; groups.set(key, g); }
-    const f = a.frontier[0];
-    g.pool += a.pool; g.sumX += f.x; g.sumY += f.y; g.count++;
-  }
-  for (const g of groups.values()) {
-    const cx = (g.sumX / g.count) * CELL + CELL / 2;
-    const cy = (g.sumY / g.count) * CELL + CELL / 2 - 16 / cam.zoom;
+    const f = attackFrontPoint(a);
+    if (a.bx === null) { a.bx = f.x; a.by = f.y; }
+    else { const k = Math.min(1, rdt * 6); a.bx += (f.x - a.bx) * k; a.by += (f.y - a.by) * k; }
+    if (!show) continue;
+    const mine = a.player === 0, vsMe = a.targetOwner === 0;
+    if (!mine && !vsMe && cam.zoom < 0.7) continue;
+    const cx = a.bx * CELL + CELL / 2, cy = a.by * CELL + CELL / 2;
     if (!inView(cx, cy, 50)) continue;
     let bg, fg = '#fff';
-    if (g.targetOwner === 0) bg = `rgba(255,90,78,${0.75 + Math.sin(now * 0.008) * 0.25})`;
-    else if (g.player === 0) bg = g.targetOwner === -1 ? 'rgba(70,150,105,0.9)' : 'rgba(46,190,110,0.95)';
+    if (vsMe) bg = `rgba(255,90,78,${0.75 + Math.sin(now * 0.008) * 0.25})`;
+    else if (mine) bg = a.targetOwner === -1 ? 'rgba(70,150,105,0.92)' : 'rgba(46,190,110,0.95)';
     else { bg = 'rgba(40,44,58,0.85)'; fg = '#d8dce6'; }
-    drawAttackBadge(cx, cy, (g.player === 0 || g.targetOwner === 0 ? '⚔ ' : '') + fmtPop(g.pool), bg, fg);
+    drawAttackBadge(cx, cy, (mine || vsMe ? '⚔ ' : '') + fmtPop(a.pool), bg, fg);
   }
 }
 
@@ -3377,7 +3430,7 @@ document.addEventListener('visibilitychange', () => {
 // ============================================================
 //  ЦИКЛ
 // ============================================================
-let rafId = 0, frozenRendered = false;
+let rafId = 0, frozenRendered = false, lastRenderAt = 0, camSig = '';
 function ensureLoop() { if (!rafId) { lastTime = performance.now(); rafId = requestAnimationFrame(loop); } }
 function loop(now) {
   rafId = 0;
@@ -3386,7 +3439,13 @@ function loop(now) {
   lastTime = now;
   const running = gameActive && !paused && !adActive;
   if (running) update(dt);
-  if (running || !frozenRendered || effects.length) { render(now); frozenRendered = !running; }
+  const sig = cam.x + ',' + cam.y + ',' + cam.zoom;
+  const camMoved = sig !== camSig;
+  if (running) {
+    // на телефоне карта перерисовывается ~30 раз/с, но мгновенно — когда двигают камеру
+    if (camMoved || !isMobileDevice || now - lastRenderAt >= 32) { render(now); lastRenderAt = now; camSig = sig; }
+    frozenRendered = false;
+  } else if (!frozenRendered || effects.length || camMoved) { render(now); camSig = sig; frozenRendered = true; }
   updateUI(dt);
   rafId = requestAnimationFrame(loop);
 }
@@ -3469,6 +3528,72 @@ function buildDiffSeg() {
   });
 }
 
+// --- карты
+function mulberry32(a) {
+  return function() { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+}
+const thumbCache = {};
+function renderMapThumb(cv, def) {
+  const size = cv.width;
+  const key = def.id + size;
+  if (!thumbCache[key]) {
+    const g = MAP_GEN[def.id](mulberry32(def.thumbSeed));
+    const img = new ImageData(size, size);
+    for (let py = 0; py < size; py++) for (let px = 0; px < size; px++) {
+      const x = (px + 0.5) * W / size, y = (py + 0.5) * H / size;
+      const land = x >= 8 && y >= 8 && x < W - 8 && y < H - 8 && g.landAt(x, y);
+      const c = land ? [118, 140, 104] : [28, 62, 100];
+      const o = (py * size + px) * 4;
+      img.data[o] = c[0]; img.data[o+1] = c[1]; img.data[o+2] = c[2]; img.data[o+3] = 255;
+    }
+    thumbCache[key] = img;
+  }
+  cv.getContext('2d').putImageData(thumbCache[key], 0, 0);
+}
+const STAR_SVG = '<svg viewBox="0 0 24 24" fill="#f5c542"><path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/></svg>';
+function updateMapPicker() {
+  const def = currentMapDef();
+  $('map-name').textContent = def.name;
+  $('map-desc').textContent = def.desc;
+  renderMapThumb($('map-thumb'), def);
+}
+function selectMap(id) {
+  menuState.map = id;
+  saveMenuState();
+  newWorld();
+  updateMapPicker(); updateStarsDisplay(); buildMapGrid();
+  closeSubmenu('map-screen');
+  sfxSuccess();
+}
+function buildMapGrid() {
+  const grid = $('map-grid');
+  grid.innerHTML = '';
+  const cur = currentMapDef().id;
+  for (const def of MAPS) {
+    const owned = mapOwned(def), sel = cur === def.id;
+    const card = document.createElement('button');
+    card.className = 'map-card' + (sel ? ' sel' : '') + (owned ? '' : ' locked');
+    card.innerHTML = `<canvas width="96" height="96"></canvas><div class="mc-body"><div class="mc-name">${def.name}</div><div class="mc-desc">${def.desc}</div><div class="mc-foot">${sel ? '✓ Выбрана' : owned ? (def.cost ? 'Открыта · выбрать' : 'Бесплатно · выбрать') : STAR_SVG + def.cost}</div></div>`;
+    renderMapThumb(card.querySelector('canvas'), def);
+    card.onclick = () => {
+      initAudio();
+      if (sel) { closeSubmenu('map-screen'); return; }
+      if (!owned) {
+        if (menuState.stars < def.cost) { toast('Нужно ' + def.cost + ' ★ — у вас ' + menuState.stars, 'warn'); sfxError(); return; }
+        showConfirm(`Открыть карту «${def.name}» за ${def.cost} ★?`, () => {
+          menuState.stars -= def.cost;
+          menuState.ownedMaps.push(def.id);
+          selectMap(def.id);
+          toast('Карта «' + def.name + '» открыта', 'good');
+        });
+        return;
+      }
+      selectMap(def.id);
+    };
+    grid.appendChild(card);
+  }
+}
+
 // ============ START / RESTART ============
 function newWorld() {
   attacks = []; ships = []; boats = []; missiles = []; effects = [];
@@ -3525,7 +3650,7 @@ function showMenu() {
   gameStarted = false;
   showGameUI(false);
   $('menu-nickname').value = menuState.nickname;
-  updateStarsDisplay(); updateMenuFoot(); buildDiffSeg();
+  updateStarsDisplay(); updateMenuFoot(); buildDiffSeg(); updateMapPicker();
   setPlayerAccent();
 }
 $('pz-resume').onclick = () => setPaused(false);
@@ -3554,6 +3679,7 @@ $('menu-start').onclick = () => {
 $('menu-custom').onclick = () => { buildColorsGrid(); buildTextureGrid(); openSubmenu('custom-screen'); };
 $('menu-shop').onclick = () => { buildShop(); openSubmenu('shop-screen'); };
 $('menu-help').onclick = () => openSubmenu('help-screen');
+$('menu-map').onclick = () => { buildMapGrid(); openSubmenu('map-screen'); };
 </script>
 </body>
 </html>
